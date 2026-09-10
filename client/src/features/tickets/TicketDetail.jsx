@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import DOMPurify from 'dompurify';
 import { api } from '../../app/api';
 
 export default function TicketDetail() {
@@ -62,7 +63,7 @@ export default function TicketDetail() {
           <li key={c.id} className={c.is_internal ? 'internal' : ''}>
             <strong>{c.author_name}</strong>
             <span className="when">{new Date(c.created_at).toLocaleString()}</span>
-            <div dangerouslySetInnerHTML={{ __html: c.body }} />
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(c.body) }} />
           </li>
         ))}
       </ul>
