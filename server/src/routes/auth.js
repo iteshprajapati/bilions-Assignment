@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import { query } from '../db/pool.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -35,17 +36,47 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-/**
- * Completes an emailed invitation. The invite link carries the user id;
- * the new joiner picks their own password here.
- */
-router.post('/invite/accept', async (req, res, next) => {
+router.post('/invite/create', requireAuth, requireRole('admin'), async (req, res, next) => {
   try {
-    const { userId, password } = req.body;
-    if (!userId || !password) {
-      return res.status(400).json({ error: 'userId and password are required' });
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
     }
 
+    const rows = await query('SELECT id FROM users WHERE id = ? AND org_id = ?', [userId, req.user.orgId]);
+    if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+
+    const inviteToken = jwt.sign(
+      { purpose: 'invite', sub: userId },
+      config.jwtSecret,
+      { expiresIn: '24h' }
+    );
+
+    res.json({ inviteToken });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/invite/accept', async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: 'token and password are required' });
+    }
+
+    let payload;
+    try {
+      payload = jwt.verify(token, config.jwtSecret);
+    } catch {
+      return res.status(401).json({ error: 'Invalid or expired invite token' });
+    }
+
+    if (payload.purpose !== 'invite') {
+      return res.status(401).json({ error: 'Invalid token purpose' });
+    }
+
+    const userId = payload.sub;
     const hash = await bcrypt.hash(password, 12);
     await query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId]);
     res.json({ ok: true });
