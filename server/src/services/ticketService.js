@@ -1,4 +1,5 @@
 import { query } from '../db/pool.js';
+import { calculateSla } from '../utils/sla.js';
 
 const PAGE_SIZE = 20;
 
@@ -30,20 +31,29 @@ export async function listTickets({ orgId, page = 1, search = '', status, priori
 
   const rows = await query(
     `SELECT t.id, t.subject, t.status, t.priority, t.created_at, t.updated_at,
-            t.assignee_id, u.name AS assignee_name, r.name AS requester_name
+            t.assignee_id,
+            u.name  AS assignee_name,
+            r.name  AS requester_name,
+            (SELECT MIN(c.created_at)
+               FROM comments c
+               JOIN users    cu ON cu.id = c.author_id
+              WHERE c.ticket_id = t.id
+                AND cu.role IN ('agent','admin')
+            ) AS responded_at
        FROM tickets t
        LEFT JOIN users u ON u.id = t.assignee_id
-       JOIN users r ON r.id = t.requester_id
+       JOIN  users r ON r.id = t.requester_id
       WHERE ${whereSql}
       ORDER BY t.${sortBy} ${order}
       LIMIT ? OFFSET ?`,
     [...params, PAGE_SIZE, offset]
   );
 
-  // Attach the comment count each row needs for the list badge.
+  // Attach comment count and computed SLA fields to each row.
   for (const row of rows) {
     const [{ c }] = await query('SELECT COUNT(*) AS c FROM comments WHERE ticket_id = ?', [row.id]);
     row.comment_count = c;
+    Object.assign(row, calculateSla(row));
   }
 
   const [{ total }] = await query(
@@ -56,14 +66,26 @@ export async function listTickets({ orgId, page = 1, search = '', status, priori
 
 export async function getTicketById(id) {
   const rows = await query(
-    `SELECT t.*, u.name AS assignee_name, r.name AS requester_name, r.email AS requester_email
+    `SELECT t.*,
+            u.name  AS assignee_name,
+            r.name  AS requester_name,
+            r.email AS requester_email,
+            (SELECT MIN(c.created_at)
+               FROM comments c
+               JOIN users    cu ON cu.id = c.author_id
+              WHERE c.ticket_id = t.id
+                AND cu.role IN ('agent','admin')
+            ) AS responded_at
        FROM tickets t
        LEFT JOIN users u ON u.id = t.assignee_id
-       JOIN users r ON r.id = t.requester_id
+       JOIN  users r ON r.id = t.requester_id
       WHERE t.id = ?`,
     [id]
   );
-  return rows[0] || null;
+  if (!rows[0]) return null;
+  const ticket = rows[0];
+  Object.assign(ticket, calculateSla(ticket));
+  return ticket;
 }
 
 export async function listComments(ticketId) {
