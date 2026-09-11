@@ -3,7 +3,7 @@ import { calculateSla } from '../utils/sla.js';
 
 const PAGE_SIZE = 20;
 
-export async function listTickets({ orgId, page = 1, search = '', status, priority, sortBy = 'created_at', order = 'desc' }) {
+export async function listTickets({ orgId, page = 1, search = '', status, priority, sortBy = 'created_at', order = 'desc', breached }) {
   const where = ['t.org_id = ?'];
   const params = [orgId];
 
@@ -50,12 +50,15 @@ export async function listTickets({ orgId, page = 1, search = '', status, priori
     Object.assign(row, calculateSla(row));
   }
 
+  // Post-query breached filter (breach is computed in JS, not SQL).
+  const filtered = breached === 'true' ? rows.filter((r) => r.isBreached) : rows;
+
   const [{ total }] = await query(
     `SELECT COUNT(*) AS total FROM tickets t WHERE ${whereSql}`,
     params
   );
 
-  return { rows, total, page, pageSize: PAGE_SIZE };
+  return { rows: filtered, total, page, pageSize: PAGE_SIZE };
 }
 
 export async function getTicketById(id) {

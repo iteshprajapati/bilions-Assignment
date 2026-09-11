@@ -14,13 +14,14 @@ const router = express.Router();
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const result = await listTickets({
-      orgId: req.user.orgId,
-      page: Number(req.query.page || 1),
-      search: req.query.search || '',
-      status: req.query.status,
+      orgId:    req.user.orgId,
+      page:     Number(req.query.page || 1),
+      search:   req.query.search || '',
+      status:   req.query.status,
       priority: req.query.priority,
-      sortBy: req.query.sortBy || 'created_at',
-      order: req.query.order || 'desc',
+      sortBy:   req.query.sortBy || 'created_at',
+      order:    req.query.order || 'desc',
+      breached: req.query.breached,   // 'true' | undefined
     });
     res.json(result);
   } catch (err) {
