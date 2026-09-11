@@ -78,7 +78,7 @@ export default function TicketList() {
           {rows.map((t, i) => (
             <tr key={i}>
               <td>{t.id}</td>
-              <td><Link to={`/tickets/${t.id}`}>{t.subject}</Link></td>
+              <td><Link to={`/tickets/${t.id}`}>{t.subject}</Link>{t.isBreached && <span className="badge-breached" style={{marginLeft:6}}>BREACHED</span>}</td>
               <td>{t.status}</td>
               <td>{t.priority}</td>
               <td>{t.assignee_name || '—'}</td>

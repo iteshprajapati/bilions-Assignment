@@ -53,6 +53,17 @@ export default function TicketDetail() {
       </p>
       <p className="body">{ticket.body}</p>
 
+      {ticket.isBreached !== undefined && (
+        <div className="sla-block">
+          {ticket.isBreached
+            ? <span className="badge-breached">BREACHED</span>
+            : <span className="badge-ok">SLA OK</span>}
+          {ticket.slaDeadline && (
+            <span>Deadline: {new Date(ticket.slaDeadline).toLocaleString()}</span>
+          )}
+        </div>
+      )}
+
       {!ticket.assignee_id && <button onClick={claim}>Claim this ticket</button>}
       {ticket.assignee_id && <p className="meta">Assigned to {ticket.assignee_name}</p>}
 
