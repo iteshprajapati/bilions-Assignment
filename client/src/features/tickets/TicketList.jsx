@@ -16,11 +16,13 @@ export default function TicketList() {
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
+  const [breached, setBreached] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ page, search, status, priority, sortBy, order: 'desc' });
+    if (breached) params.set('breached', 'true');
     api(`/tickets?${params.toString()}`)
       .then((data) => {
         setRows(data.rows);
@@ -28,7 +30,7 @@ export default function TicketList() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [page, search, status, priority, sortBy]);
+  }, [page, search, status, priority, sortBy, breached]);
 
   async function handleDelete(id) {
     await api(`/tickets/${id}`, { method: 'DELETE' });
@@ -63,6 +65,14 @@ export default function TicketList() {
           <option value="priority">Priority</option>
           <option value="status">Status</option>
         </select>
+        <label className="filter-breached">
+          <input
+            type="checkbox"
+            checked={breached}
+            onChange={(e) => { setBreached(e.target.checked); setPage(1); }}
+          />
+          Breached only
+        </label>
       </div>
 
       {loading && <p>Loading…</p>}
