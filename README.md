@@ -3,7 +3,7 @@
 PART - 1 CODE REVIEW
 
 Use this drive link to access the pdf of the code review document
-https://drive.google.com/file/d/1AbjmTskQN4Re7wNTNSTvfKtfBsPgVXKu/view?usp=sharing
+https://drive.google.com/file/d/1jT7ZwaY75Eqy9hndog_ujVzoUoBkZ0gb/view?usp=sharing
 
 Alternatively, if not accessible use this.
 https://docs.google.com/document/d/1HgQROWdkicQUUpx-tmXaXZVuZLTuysjlE9TtgR1s1Bk/edit?usp=sharing
