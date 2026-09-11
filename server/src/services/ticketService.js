@@ -3,12 +3,6 @@ import { calculateSla } from '../utils/sla.js';
 
 const PAGE_SIZE = 20;
 
-/**
- * Paginated ticket list for the current organisation.
- *
- * Supports free-text search on subject, filtering by status and priority,
- * and sorting by any column the UI exposes in its dropdown.
- */
 export async function listTickets({ orgId, page = 1, search = '', status, priority, sortBy = 'created_at', order = 'desc' }) {
   const where = ['t.org_id = ?'];
   const params = [orgId];
